@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class RunLogScreen extends StatefulWidget {
   const RunLogScreen({super.key});
@@ -10,8 +11,14 @@ class RunLogScreen extends StatefulWidget {
 class _RunLogScreenState extends State<RunLogScreen> {
   final TextEditingController distanceController = TextEditingController();
   final TextEditingController timeController = TextEditingController();
-
-  void logRun() {
+ 
+Future<void> logRun() async {
+    FirebaseFirestore.instance.collection('runs').add({
+      'distance': double.parse(distanceController.text),
+      'time': timeController.text,
+      'date': DateTime.now(),
+    });
+    Navigator.pop(context);
   }
 
   @override

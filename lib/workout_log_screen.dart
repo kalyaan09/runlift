@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class WorkoutLogScreen extends StatefulWidget {
   const WorkoutLogScreen({super.key});
@@ -14,7 +15,15 @@ class _WorkoutLogScreenState extends State<WorkoutLogScreen> {
   final TextEditingController repsController = TextEditingController();
   final TextEditingController weightController = TextEditingController();
 
-  void logWorkout(){
+   Future<void> logWorkout() async {
+    FirebaseFirestore.instance.collection('workouts').add({
+      'exercise': exerciseController.text,
+      'sets': int.parse(setsController.text),
+      'reps': int.parse(repsController.text),
+      'weight': double.parse(weightController.text),
+      'date': DateTime.now(),
+    });
+    Navigator.pop(context);
   }
 
   @override
