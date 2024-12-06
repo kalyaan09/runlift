@@ -25,9 +25,3 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-
-  # Add assets for the wallpaper image
-  assets:
-    - assets/wallpaper/workout.jpg
-    - assets/wallpaper/run.jpg
-    - assets/wallpaper/runn.jpg
