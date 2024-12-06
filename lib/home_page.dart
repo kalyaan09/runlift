@@ -1,95 +1,104 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'workout_log_screen.dart';
 import 'run_log_screen.dart';
+import 'history_page.dart';
+import 'login_screen.dart'; // Import the Login Screen
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
-  Future<List<Map<String, dynamic>>> fetchRecentLogs() async {
-    final workoutSnapshot = await FirebaseFirestore.instance
-        .collection('workouts')
-        .orderBy('date', descending: true)
-        .limit(5)
-        .get();
+  @override
+  _HomePageState createState() => _HomePageState();
+}
 
-    final workoutLogs = workoutSnapshot.docs.map((doc) {
-      final data = doc.data();
-      data['type'] = 'workout';
-      return data;
-    }).toList();
-    final runSnapshot = await FirebaseFirestore.instance
-        .collection('runs')
-        .orderBy('date', descending: true)
-        .limit(5)
-        .get();
+class _HomePageState extends State<HomePage> {
+  String? userName;
 
-    final runLogs = runSnapshot.docs.map((doc) {
-      final data = doc.data();
-      data['type'] = 'run';
-      return data;
-    }).toList();
-    final combinedLogs = [...workoutLogs, ...runLogs];
-    combinedLogs.sort((a, b) =>
-        (b['date'] as Timestamp).compareTo(a['date'] as Timestamp));
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserName();
+  }
 
-    return combinedLogs;
+  Future<void> _fetchUserName() async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId != null) {
+      try {
+        final doc = await FirebaseFirestore.instance.collection('users').doc(userId).get();
+        if (doc.exists) {
+          setState(() {
+            userName = doc['name'];
+          });
+        } else {
+          setState(() {
+            userName = "User";
+          });
+        }
+      } catch (e) {
+        setState(() {
+          userName = "User";
+        });
+      }
+    } else {
+      setState(() {
+        userName = "User";
+      });
+    }
+  }
+
+  Future<void> _logout() async {
+    await FirebaseAuth.instance.signOut(); // Log out the user
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginScreen()), // Redirect to Login Screen
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Dashboard")),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      appBar: AppBar(
+        title: Text("Welcome ${userName ?? 'Loading...'}"),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: _logout, // Call the logout function
+            tooltip: 'Logout',
+          ),
+        ],
+      ),
+      body: Center(
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             ElevatedButton(
               child: const Text("Log Workout"),
               onPressed: () {
                 Navigator.push(
-                    context, MaterialPageRoute(builder: (context) => const WorkoutLogScreen()));
+                  context,
+                  MaterialPageRoute(builder: (context) => const WorkoutLogScreen()),
+                );
               },
             ),
             ElevatedButton(
               child: const Text("Log Run"),
               onPressed: () {
                 Navigator.push(
-                    context, MaterialPageRoute(builder: (context) => const RunLogScreen()));
+                  context,
+                  MaterialPageRoute(builder: (context) => const RunLogScreen()),
+                );
               },
             ),
-            const SizedBox(height: 20),
-            Expanded(
-              child: FutureBuilder<List<Map<String, dynamic>>>(
-                future: fetchRecentLogs(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Center(child: Text("No recent workouts/runs found."));
-                  }
-
-                  final logs = snapshot.data!;
-                  return ListView.builder(
-                    itemCount: logs.length,
-                    itemBuilder: (context, index) {
-                      final log = logs[index];
-                      final isWorkout = log['type'] == 'workout';
-                      return ListTile(
-                        title: Text(isWorkout
-                            ? 'Workout: ${log['exercise']}'
-                            : 'Run: ${log['distance']} km'),
-                        subtitle: Text(isWorkout
-                            ? 'Sets: ${log['sets']}, Reps: ${log['reps']}, Weight: ${log['weight']} kg'
-                            : 'Time: ${log['time']}'),
-                        trailing: Text(
-                            '${(log['date'] as Timestamp).toDate().toLocal()}'),
-                      );
-                    },
-                  );
-                },
-              ),
+            ElevatedButton(
+              child: const Text("View History"),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const HistoryPage()),
+                );
+              },
             ),
           ],
         ),

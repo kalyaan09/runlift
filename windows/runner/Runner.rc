@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "runlift" "\0"
+            VALUE "FileDescription", "pro" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "runlift" "\0"
+            VALUE "InternalName", "pro" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2024 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "runlift.exe" "\0"
-            VALUE "ProductName", "runlift" "\0"
+            VALUE "OriginalFilename", "pro.exe" "\0"
+            VALUE "ProductName", "pro" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

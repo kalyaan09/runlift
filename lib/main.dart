@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'login_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(RunLiftApp());
+  await Firebase.initializeApp();
+  runApp(const RunLiftApp());
 }
 
 class RunLiftApp extends StatelessWidget {
@@ -14,7 +16,7 @@ class RunLiftApp extends StatelessWidget {
     return MaterialApp(
       title: 'RunLift',
       theme: ThemeData(primarySwatch: Colors.blue),
-      home: LoginScreen(),
+      home: const LoginScreen(),
     );
   }
 }

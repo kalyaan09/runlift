@@ -12,6 +12,7 @@ class HistoryPage extends StatelessWidget {
     }
 
     try {
+      // Fetch workouts
       final workoutSnapshot = await FirebaseFirestore.instance
           .collection('workouts')
           .where('userId', isEqualTo: userId)
@@ -65,42 +66,51 @@ class HistoryPage extends StatelessWidget {
             itemCount: history.length,
             itemBuilder: (context, index) {
               final entry = history[index];
+
               if (entry['type'] == 'Workout') {
                 return Card(
                   margin: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("Workout on: ${(entry['date'] as Timestamp).toDate().toString()}"),
-                      for (var exercise in entry['exercises'])
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text("Exercise: ${exercise['name']}"),
-                              for (var set in exercise['sets'])
-                                Row(
-                                  children: [
-                                    Text("Reps: ${set['reps']}"),
-                                    const SizedBox(width: 10),
-                                    Text("Weight: ${set['weight']} kg"),
-                                  ],
-                                ),
-                            ],
-                          ),
-                        ),
-                    ],
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text("Workout on: ${(entry['date'] as Timestamp).toDate().toString()}"),
+                        // Check if 'exercises' exists and is a list
+                        if (entry['exercises'] != null && entry['exercises'] is List)
+                          for (var exercise in entry['exercises'])
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text("Exercise: ${exercise['name'] ?? 'Unknown'}"),
+                                  if (exercise['sets'] != null && exercise['sets'] is List)
+                                    for (var set in exercise['sets'])
+                                      Row(
+                                        children: [
+                                          Text("Reps: ${set['reps'] ?? 'N/A'}"),
+                                          const SizedBox(width: 10),
+                                          Text("Weight: ${set['weight'] ?? 'N/A'} kg"),
+                                        ],
+                                      ),
+                                ],
+                              ),
+                            )
+                        else
+                          const Text("No exercises recorded."),
+                      ],
+                    ),
                   ),
                 );
               } else if (entry['type'] == 'Run') {
                 return ListTile(
-                  title: Text("Run: ${entry['distance']} km"),
-                  subtitle: Text("Time: ${entry['time']}"),
+                  title: Text("Run: ${entry['distance'] ?? 'Unknown'} km"),
+                  subtitle: Text("Time: ${entry['time'] ?? 'N/A'}"),
                   trailing: Text((entry['date'] as Timestamp).toDate().toString()),
                 );
               } else {
-                return const SizedBox.shrink(); // For safety, handle unexpected types
+                return const SizedBox.shrink(); // Handle unexpected types
               }
             },
           );
