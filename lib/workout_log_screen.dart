@@ -80,101 +80,99 @@ class _WorkoutLogScreenState extends State<WorkoutLogScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Log Workout")),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              Expanded(
-                child: ListView.builder(
-                  itemCount: exercises.length,
-                  itemBuilder: (context, exerciseIndex) {
-                    final exercise = exercises[exerciseIndex];
-                    return Card(
-                      margin: const EdgeInsets.symmetric(vertical: 8.0),
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            TextField(
-                              onChanged: (value) => exercise['name'] = value,
-                              decoration: const InputDecoration(
-                                labelText: "Exercise Name",
-                              ),
+      appBar: AppBar(title: const Text("Log Workout")),  
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            Expanded(
+              child: ListView.builder(
+                itemCount: exercises.length,
+                itemBuilder: (context, exerciseIndex) {
+                  final exercise = exercises[exerciseIndex];
+                  return Card(
+                    margin: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          TextField(
+                            onChanged: (value) => exercise['name'] = value,
+                            decoration: const InputDecoration(
+                              labelText: "Exercise Name",
                             ),
-                            const SizedBox(height: 10),
-                            ListView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: exercise['sets'].length,
-                              itemBuilder: (context, setIndex) {
-                                final set = exercise['sets'][setIndex];
-                                return Row(
-                                  children: [
-                                    Expanded(
-                                      child: TextField(
-                                        keyboardType: TextInputType.number,
-                                        onChanged: (value) => set['reps'] =
-                                            int.tryParse(value) ?? 0,
-                                        decoration: const InputDecoration(
-                                          labelText: "Reps",
-                                        ),
+                          ),
+                          const SizedBox(height: 10),
+                          ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: exercise['sets'].length,
+                            itemBuilder: (context, setIndex) {
+                              final set = exercise['sets'][setIndex];
+                              return Row(
+                                children: [
+                                  Expanded(
+                                    child: TextField(
+                                      keyboardType: TextInputType.number,
+                                      onChanged: (value) => set['reps'] =
+                                          int.tryParse(value) ?? 0,
+                                      decoration: const InputDecoration(
+                                        labelText: "Reps",
                                       ),
                                     ),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: TextField(
-                                        keyboardType: TextInputType.number,
-                                        onChanged: (value) => set['weight'] =
-                                            double.tryParse(value) ?? 0.0,
-                                        decoration: const InputDecoration(
-                                          labelText: "Weight (kg)",
-                                        ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: TextField(
+                                      keyboardType: TextInputType.number,
+                                      onChanged: (value) => set['weight'] =
+                                          double.tryParse(value) ?? 0.0,
+                                      decoration: const InputDecoration(
+                                        labelText: "Weight (kg)",
                                       ),
                                     ),
-                                  ],
-                                );
-                              },
-                            ),
-                            TextButton(
-                              onPressed: () => addSet(exerciseIndex),
-                              child: const Text("Add Set"),
-                            ),
-                          ],
-                        ),
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
+                          TextButton(
+                            onPressed: () => addSet(exerciseIndex),
+                            child: const Text("Add Set"),
+                          ),
+                        ],
                       ),
-                    );
-                  },
-                ),
-              ),
-              ElevatedButton(
-                onPressed: addExercise,
-                child: const Text("Add Exercise"),
-              ),
-              ElevatedButton.icon(
-                icon: const Icon(Icons.camera),
-                label: const Text("Click a Picture!"),
-                onPressed: () async {
-                  if (workoutImagePath == null) {
-                    await captureWorkoutImage();
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Image already captured!")),
-                    );
-                  }
+                    ),
+                  );
                 },
               ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: logWorkout,
-                child: const Text("Log Workout"),
-              ),
-            ],
-          ),
+            ),
+            ElevatedButton(
+              onPressed: addExercise,
+              child: const Text("Add Exercise"),
+            ),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.camera),
+              label: const Text("Click a Picture!"),
+              onPressed: () async {
+                if (workoutImagePath == null) {
+                  await captureWorkoutImage();
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Image already captured!")),
+                  );
+                }
+              },
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: logWorkout,
+              child: const Text("Log Workout"),
+            ),
+          ],
         ),
-      )
+      ),
     );
   }
 }
