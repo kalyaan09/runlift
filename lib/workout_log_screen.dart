@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'image_manager.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
 class WorkoutLogScreen extends StatefulWidget {
@@ -15,27 +16,65 @@ class _WorkoutLogScreenState extends State<WorkoutLogScreen> {
   final List<Map<String, dynamic>> exercises = [];
   String? workoutId;
   String? workoutImagePath;
+
   @override
   void initState() {
     super.initState();
     workoutId = FirebaseFirestore.instance.collection('workouts').doc().id;
   }
-  Future<void> captureWorkoutImage() async{
-    final imageManager = ImageManager();
-    final imageURL = await imageManager.uploadImage('workouts/$workoutId.jpg');
-    if (imageURL != null) {
+
+  /// Allow user to choose between camera or gallery for image upload
+  Future<void> captureWorkoutImage() async {
+    final imageSource = await showDialog<ImageSource>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Choose Image Source"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text("Camera"),
+              onTap: () => Navigator.of(context).pop(ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text("Gallery"),
+              onTap: () => Navigator.of(context).pop(ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (imageSource == null) return; // User cancelled
+
+    try {
+      final XFile? photo = await ImagePicker().pickImage(source: imageSource);
+      if (photo == null) return; // User cancelled picking an image
+
+      final File imageFile = File(photo.path);
+      final storageRef = FirebaseStorage.instance
+          .ref()
+          .child('workouts/$workoutId.jpg');
+      await storageRef.putFile(imageFile);
+      final imageURL = await storageRef.getDownloadURL();
+
       setState(() {
         workoutImagePath = imageURL;
       });
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Image uploaded successfully!")),
       );
-    } else {
+    } catch (e) {
+      print("Error uploading image: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Failed to capture and upload image.")),
+        const SnackBar(content: Text("Failed to upload image.")),
       );
     }
   }
+
   Future<void> logWorkout() async {
     final userId = FirebaseAuth.instance.currentUser?.uid;
 
@@ -51,7 +90,7 @@ class _WorkoutLogScreenState extends State<WorkoutLogScreen> {
         'exercises': exercises,
         'date': DateTime.now(),
         'userId': userId,
-         'image': workoutImagePath,
+        'image': workoutImagePath,
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -80,7 +119,7 @@ class _WorkoutLogScreenState extends State<WorkoutLogScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Log Workout")),  
+      appBar: AppBar(title: const Text("Log Workout")),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -154,13 +193,13 @@ class _WorkoutLogScreenState extends State<WorkoutLogScreen> {
             ),
             ElevatedButton.icon(
               icon: const Icon(Icons.camera),
-              label: const Text("Click a Picture!"),
+              label: const Text("Click or Upload a Picture"),
               onPressed: () async {
                 if (workoutImagePath == null) {
                   await captureWorkoutImage();
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Image already captured!")),
+                    const SnackBar(content: Text("Image already uploaded!")),
                   );
                 }
               },

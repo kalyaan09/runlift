@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart';
 import 'dart:async';
+import 'dart:io';
 
 class RunLogScreen extends StatefulWidget {
   const RunLogScreen({super.key});
@@ -60,12 +63,54 @@ class _RunLogScreenState extends State<RunLogScreen> {
       return;
     }
 
+    String? imageUrl;
+
+    // Allow user to upload an image (camera or gallery)
+    final imageSource = await showDialog<ImageSource>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Choose Image Source"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text("Camera"),
+              onTap: () => Navigator.of(context).pop(ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text("Gallery"),
+              onTap: () => Navigator.of(context).pop(ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (imageSource != null) {
+      try {
+        final XFile? photo = await ImagePicker().pickImage(source: imageSource);
+        if (photo != null) {
+          final File imageFile = File(photo.path);
+          final storageRef = FirebaseStorage.instance
+              .ref()
+              .child('runs/${DateTime.now().millisecondsSinceEpoch}.jpg');
+          await storageRef.putFile(imageFile);
+          imageUrl = await storageRef.getDownloadURL();
+        }
+      } catch (e) {
+        print("Error uploading image: $e");
+      }
+    }
+
     try {
       await FirebaseFirestore.instance.collection('runs').add({
         'distance': double.parse(distanceController.text),
         'time': _formattedTime,
         'date': DateTime.now(),
         'userId': userId,
+        'image': imageUrl, // Save image URL (if uploaded)
       });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Run logged successfully!")),
