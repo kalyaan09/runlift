@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter/services.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -65,7 +66,6 @@ class _RunLogScreenState extends State<RunLogScreen> {
 
     String? imageUrl;
 
-    // Allow user to upload an image (camera or gallery)
     final imageSource = await showDialog<ImageSource>(
       context: context,
       builder: (context) => AlertDialog(
@@ -106,11 +106,11 @@ class _RunLogScreenState extends State<RunLogScreen> {
 
     try {
       await FirebaseFirestore.instance.collection('runs').add({
-        'distance': double.parse(distanceController.text),
+        'distance': int.parse(distanceController.text), 
         'time': _formattedTime,
         'date': DateTime.now(),
         'userId': userId,
-        'image': imageUrl, // Save image URL (if uploaded)
+        'image': imageUrl, 
       });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Run logged successfully!")),
@@ -135,6 +135,9 @@ class _RunLogScreenState extends State<RunLogScreen> {
               controller: distanceController,
               decoration: const InputDecoration(labelText: "Distance (km)"),
               keyboardType: TextInputType.number,
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly, 
+              ],
             ),
             const SizedBox(height: 10),
             Text("Time: $_formattedTime"),
@@ -180,6 +183,9 @@ class _RunLogScreenState extends State<RunLogScreen> {
               controller: distanceController,
               decoration: const InputDecoration(labelText: "Distance (km)"),
               keyboardType: TextInputType.number,
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+              ],
             ),
             const SizedBox(height: 20),
             Row(
