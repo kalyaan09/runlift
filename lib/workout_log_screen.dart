@@ -23,7 +23,6 @@ class _WorkoutLogScreenState extends State<WorkoutLogScreen> {
     workoutId = FirebaseFirestore.instance.collection('workouts').doc().id;
   }
 
-  /// Allow user to choose between camera or gallery for image upload
   Future<void> captureWorkoutImage() async {
     final imageSource = await showDialog<ImageSource>(
       context: context,
@@ -47,11 +46,11 @@ class _WorkoutLogScreenState extends State<WorkoutLogScreen> {
       ),
     );
 
-    if (imageSource == null) return; // User cancelled
+    if (imageSource == null) return;
 
     try {
       final XFile? photo = await ImagePicker().pickImage(source: imageSource);
-      if (photo == null) return; // User cancelled picking an image
+      if (photo == null) return;
 
       final File imageFile = File(photo.path);
       final storageRef = FirebaseStorage.instance
@@ -84,7 +83,26 @@ class _WorkoutLogScreenState extends State<WorkoutLogScreen> {
       );
       return;
     }
-
+    final shouldUploadImage = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Add a Picture?"),
+        content: const Text("Would you like to click or upload a picture for this workout?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text("No"),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text("Yes"),
+          ),
+        ],
+      ),
+    );
+    if (shouldUploadImage == true) {
+      await captureWorkoutImage();
+    }
     try {
       await FirebaseFirestore.instance.collection('workouts').doc(workoutId).set({
         'exercises': exercises,
@@ -190,19 +208,6 @@ class _WorkoutLogScreenState extends State<WorkoutLogScreen> {
             ElevatedButton(
               onPressed: addExercise,
               child: const Text("Add Exercise"),
-            ),
-            ElevatedButton.icon(
-              icon: const Icon(Icons.camera),
-              label: const Text("Click or Upload a Picture"),
-              onPressed: () async {
-                if (workoutImagePath == null) {
-                  await captureWorkoutImage();
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Image already uploaded!")),
-                  );
-                }
-              },
             ),
             const SizedBox(height: 20),
             ElevatedButton(

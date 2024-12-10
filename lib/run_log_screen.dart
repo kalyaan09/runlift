@@ -64,8 +64,6 @@ class _RunLogScreenState extends State<RunLogScreen> {
     }
 
     String? imageUrl;
-
-    // Allow user to upload an image (camera or gallery)
     final imageSource = await showDialog<ImageSource>(
       context: context,
       builder: (context) => AlertDialog(
@@ -110,7 +108,7 @@ class _RunLogScreenState extends State<RunLogScreen> {
         'time': _formattedTime,
         'date': DateTime.now(),
         'userId': userId,
-        'image': imageUrl, // Save image URL (if uploaded)
+        'image': imageUrl,
       });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Run logged successfully!")),
