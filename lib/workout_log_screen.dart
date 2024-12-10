@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter/services.dart';
 import 'dart:io';
 
 class WorkoutLogScreen extends StatefulWidget {
@@ -51,6 +52,11 @@ class _WorkoutLogScreenState extends State<WorkoutLogScreen> {
     try {
       final XFile? photo = await ImagePicker().pickImage(source: imageSource);
       if (photo == null) return;
+    if (imageSource == null) return; 
+
+    try {
+      final XFile? photo = await ImagePicker().pickImage(source: imageSource);
+      if (photo == null) return; 
 
       final File imageFile = File(photo.path);
       final storageRef = FirebaseStorage.instance
@@ -130,7 +136,7 @@ class _WorkoutLogScreenState extends State<WorkoutLogScreen> {
 
   void addSet(int exerciseIndex) {
     setState(() {
-      exercises[exerciseIndex]['sets'].add({'reps': 0, 'weight': 0.0});
+      exercises[exerciseIndex]['sets'].add({'reps': 0, 'weight': 0});
     });
   }
 
@@ -172,6 +178,9 @@ class _WorkoutLogScreenState extends State<WorkoutLogScreen> {
                                   Expanded(
                                     child: TextField(
                                       keyboardType: TextInputType.number,
+                                      inputFormatters: [
+                                        FilteringTextInputFormatter.digitsOnly
+                                      ],
                                       onChanged: (value) => set['reps'] =
                                           int.tryParse(value) ?? 0,
                                       decoration: const InputDecoration(
@@ -183,8 +192,11 @@ class _WorkoutLogScreenState extends State<WorkoutLogScreen> {
                                   Expanded(
                                     child: TextField(
                                       keyboardType: TextInputType.number,
+                                      inputFormatters: [
+                                        FilteringTextInputFormatter.digitsOnly
+                                      ], 
                                       onChanged: (value) => set['weight'] =
-                                          double.tryParse(value) ?? 0.0,
+                                          int.tryParse(value) ?? 0,
                                       decoration: const InputDecoration(
                                         labelText: "Weight (kg)",
                                       ),

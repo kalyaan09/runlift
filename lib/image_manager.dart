@@ -6,11 +6,11 @@ import 'package:flutter/material.dart';
 class ImageManager {
   final ImagePicker _picker = ImagePicker();
 
-  /// Show a dialog to choose between camera and gallery
-  Future<String?> pickImageAndUpload(BuildContext context, String storagePath) async {
+  Future<String?> pickImageAndUpload(
+      BuildContext context, String storagePath) async {
     final selectedOption = await _showImageSourceDialog(context);
 
-    if (selectedOption == null) return null; // If user cancels the dialog
+    if (selectedOption == null) return null;
 
     try {
       final XFile? photo = await _picker.pickImage(
@@ -33,7 +33,6 @@ class ImageManager {
     }
   }
 
-  /// Display a dialog to choose the image source
   Future<ImageSource?> _showImageSourceDialog(BuildContext context) async {
     return showDialog<ImageSource>(
       context: context,
