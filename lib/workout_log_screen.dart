@@ -52,11 +52,6 @@ class _WorkoutLogScreenState extends State<WorkoutLogScreen> {
     try {
       final XFile? photo = await ImagePicker().pickImage(source: imageSource);
       if (photo == null) return;
-    if (imageSource == null) return; 
-
-    try {
-      final XFile? photo = await ImagePicker().pickImage(source: imageSource);
-      if (photo == null) return; 
 
       final File imageFile = File(photo.path);
       final storageRef = FirebaseStorage.instance
@@ -89,6 +84,7 @@ class _WorkoutLogScreenState extends State<WorkoutLogScreen> {
       );
       return;
     }
+
     final shouldUploadImage = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -106,9 +102,11 @@ class _WorkoutLogScreenState extends State<WorkoutLogScreen> {
         ],
       ),
     );
+
     if (shouldUploadImage == true) {
       await captureWorkoutImage();
     }
+
     try {
       await FirebaseFirestore.instance.collection('workouts').doc(workoutId).set({
         'exercises': exercises,
@@ -194,7 +192,7 @@ class _WorkoutLogScreenState extends State<WorkoutLogScreen> {
                                       keyboardType: TextInputType.number,
                                       inputFormatters: [
                                         FilteringTextInputFormatter.digitsOnly
-                                      ], 
+                                      ],
                                       onChanged: (value) => set['weight'] =
                                           int.tryParse(value) ?? 0,
                                       decoration: const InputDecoration(
