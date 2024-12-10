@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_heatmap_calendar/flutter_heatmap_calendar.dart';
 import 'workout_log_screen.dart';
 import 'run_log_screen.dart';
 import 'history_page.dart';
@@ -15,11 +16,24 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   String? userName;
+  int totalWorkouts = 0;
+  int totalRuns = 0;
+  Map<DateTime, int> activityCounts = {};
+  final List<String> motivationalQuotes = [
+    "The difference between try and triumph is just a little umph!",
+    "Push yourself because no one else is going to do it for you.",
+    "Fitness is not about being better than someone else; it's about being better than you used to be.",
+    "Strive for progress, not perfection.",
+  ];
+  late String quoteOfTheDay;
 
   @override
   void initState() {
     super.initState();
     _fetchUserName();
+    _fetchDashboardStats();
+    _fetchActivityCounts();
+    _selectQuoteOfTheDay();
   }
 
   Future<void> _fetchUserName() async {
@@ -48,11 +62,77 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Future<void> _fetchDashboardStats() async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId != null) {
+      try {
+        final workoutSnapshot = await FirebaseFirestore.instance
+            .collection('workouts')
+            .where('userId', isEqualTo: userId)
+            .get();
+        final runSnapshot = await FirebaseFirestore.instance
+            .collection('runs')
+            .where('userId', isEqualTo: userId)
+            .get();
+
+        setState(() {
+          totalWorkouts = workoutSnapshot.docs.length;
+          totalRuns = runSnapshot.docs.length;
+        });
+      } catch (e) {
+        print("Error fetching dashboard stats: $e");
+      }
+    }
+  }
+
+  Future<void> _fetchActivityCounts() async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId != null) {
+      try {
+        final counts = <DateTime, int>{};
+
+        final workoutSnapshot = await FirebaseFirestore.instance
+            .collection('workouts')
+            .where('userId', isEqualTo: userId)
+            .get();
+
+        for (var doc in workoutSnapshot.docs) {
+          final date = (doc['date'] as Timestamp).toDate();
+          final key = DateTime(date.year, date.month, date.day);
+          counts[key] = (counts[key] ?? 0) + 1;
+        }
+
+        final runSnapshot = await FirebaseFirestore.instance
+            .collection('runs')
+            .where('userId', isEqualTo: userId)
+            .get();
+
+        for (var doc in runSnapshot.docs) {
+          final date = (doc['date'] as Timestamp).toDate();
+          final key = DateTime(date.year, date.month, date.day);
+          counts[key] = (counts[key] ?? 0) + 1;
+        }
+
+        setState(() {
+          activityCounts = counts;
+        });
+      } catch (e) {
+        print("Error fetching activity counts: $e");
+      }
+    }
+  }
+
+  void _selectQuoteOfTheDay() {
+    setState(() {
+      quoteOfTheDay = (motivationalQuotes..shuffle()).first;
+    });
+  }
+
   Future<void> _logout() async {
-    await FirebaseAuth.instance.signOut(); // Log out the user
+    await FirebaseAuth.instance.signOut();
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => const LoginScreen()), // Redirect to Login Screen
+      MaterialPageRoute(builder: (context) => const LoginScreen()), 
     );
   }
 
@@ -65,16 +145,14 @@ class _HomePageState extends State<HomePage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
-            onPressed: _logout, // Call the logout function
+            onPressed: _logout, 
             tooltip: 'Logout',
           ),
         ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        child: ListView(
           children: [
             Text(
               "Welcome, ${userName ?? 'Loading...'}",
@@ -84,7 +162,77 @@ class _HomePageState extends State<HomePage> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 40),
+            const SizedBox(height: 20),
+
+            Card(
+              margin: const EdgeInsets.symmetric(vertical: 10),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    Text(
+                      "Dashboard Overview",
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        Column(
+                          children: [
+                            Text("Workouts", style: TextStyle(fontWeight: FontWeight.bold)),
+                            Text("$totalWorkouts"),
+                          ],
+                        ),
+                        Column(
+                          children: [
+                            Text("Runs", style: TextStyle(fontWeight: FontWeight.bold)),
+                            Text("$totalRuns"),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+            Text(
+              "Your Activity",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 10),
+            HeatMap(
+              datasets: activityCounts,
+              startDate: DateTime.now().subtract(const Duration(days: 365)),
+              endDate: DateTime.now(),
+              colorMode: ColorMode.opacity,
+              showText: false,
+              scrollable: true,
+              colorsets: const {
+                1: Colors.green,
+                3: Colors.greenAccent,
+                5: Colors.blue,
+                10: Colors.deepPurple,
+              },
+            ),
+
+            const SizedBox(height: 20),
+            Card(
+              margin: const EdgeInsets.symmetric(vertical: 10),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(
+                  '"$quoteOfTheDay"',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 16, fontStyle: FontStyle.italic, color: Colors.grey),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
                 Navigator.push(
