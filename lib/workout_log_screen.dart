@@ -20,19 +20,19 @@ class _WorkoutLogScreenState extends State<WorkoutLogScreen> {
 
   final Map<String, List<Map<String, dynamic>>> workoutTemplates = {
     "Push": [
-      {"name": "Bench Press", "sets": [{"reps": 0, "weight": 0}]},
-      {"name": "Overhead Press", "sets": [{"reps": 0, "weight": 0}]},
-      {"name": "Tricep Dips", "sets": [{"reps": 0, "weight": 0}]},
+      {"name": "Bench Press", "sets": [{"reps": 10, "weight": 0}]},
+      {"name": "Overhead Press", "sets": [{"reps": 8, "weight": 0}]},
+      {"name": "Tricep Dips", "sets": [{"reps": 12, "weight": 0}]},
     ],
     "Pull": [
-      {"name": "Pull-Ups", "sets": [{"reps": 0, "weight": 0}]},
-      {"name": "Barbell Row", "sets": [{"reps": 0, "weight": 0}]},
-      {"name": "Bicep Curls", "sets": [{"reps": 0, "weight": 0}]},
+      {"name": "Pull-Ups", "sets": [{"reps": 8, "weight": 0}]},
+      {"name": "Barbell Row", "sets": [{"reps": 10, "weight": 0}]},
+      {"name": "Bicep Curls", "sets": [{"reps": 12, "weight": 0}]},
     ],
     "Legs": [
-      {"name": "Squats", "sets": [{"reps": 0, "weight": 0}]},
-      {"name": "Lunges", "sets": [{"reps": 0, "weight": 0}]},
-      {"name": "Leg Press", "sets": [{"reps": 0, "weight": 0}]},
+      {"name": "Squats", "sets": [{"reps": 10, "weight": 0}]},
+      {"name": "Lunges", "sets": [{"reps": 12, "weight": 0}]},
+      {"name": "Leg Press", "sets": [{"reps": 10, "weight": 0}]},
     ],
   };
 
@@ -72,7 +72,8 @@ class _WorkoutLogScreenState extends State<WorkoutLogScreen> {
       if (photo == null) return;
 
       final File imageFile = File(photo.path);
-      final storageRef = FirebaseStorage.instance.ref().child('workouts/$workoutId.jpg');
+      final storageRef =
+          FirebaseStorage.instance.ref().child('workouts/$workoutId.jpg');
       await storageRef.putFile(imageFile);
       final imageURL = await storageRef.getDownloadURL();
 
@@ -99,6 +100,29 @@ class _WorkoutLogScreenState extends State<WorkoutLogScreen> {
         const SnackBar(content: Text("User not logged in!")),
       );
       return;
+    }
+
+    final shouldUploadImage = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Add a Picture?"),
+        content:
+            const Text("Would you like to click or upload a picture for this workout?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text("No"),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text("Yes"),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldUploadImage == true) {
+      await captureWorkoutImage();
     }
 
     try {
@@ -190,14 +214,14 @@ class _WorkoutLogScreenState extends State<WorkoutLogScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           TextField(
-                            controller: TextEditingController(text: exercise['name']),
+                            controller:
+                                TextEditingController(text: exercise['name']),
                             onChanged: (value) => exercise['name'] = value,
                             decoration: const InputDecoration(
                               labelText: "Exercise Name",
                             ),
                           ),
                           const SizedBox(height: 10),
-
                           ListView.builder(
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
@@ -209,18 +233,28 @@ class _WorkoutLogScreenState extends State<WorkoutLogScreen> {
                                   Expanded(
                                     child: TextField(
                                       keyboardType: TextInputType.number,
-                                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                                      onChanged: (value) => set['reps'] = int.tryParse(value) ?? 0,
-                                      decoration: const InputDecoration(labelText: "Reps"),
+                                      inputFormatters: [
+                                        FilteringTextInputFormatter.digitsOnly
+                                      ],
+                                      onChanged: (value) => set['reps'] =
+                                          int.tryParse(value) ?? 0,
+                                      decoration: const InputDecoration(
+                                        labelText: "Reps",
+                                      ),
                                     ),
                                   ),
                                   const SizedBox(width: 10),
                                   Expanded(
                                     child: TextField(
                                       keyboardType: TextInputType.number,
-                                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                                      onChanged: (value) => set['weight'] = int.tryParse(value) ?? 0,
-                                      decoration: const InputDecoration(labelText: "Weight (kg)"),
+                                      inputFormatters: [
+                                        FilteringTextInputFormatter.digitsOnly
+                                      ],
+                                      onChanged: (value) => set['weight'] =
+                                          int.tryParse(value) ?? 0,
+                                      decoration: const InputDecoration(
+                                        labelText: "Weight (kg)",
+                                      ),
                                     ),
                                   ),
                                 ],
