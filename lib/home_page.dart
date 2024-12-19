@@ -31,8 +31,8 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _fetchUserName();
-    _fetchDashboardStats();
-    _fetchActivityCounts();
+    _listenToDashboardStats();
+    _listenToActivityCounts();
     _selectQuoteOfTheDay();
   }
 
@@ -62,63 +62,61 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  Future<void> _fetchDashboardStats() async {
+  void _listenToDashboardStats() {
     final userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId != null) {
-      try {
-        final workoutSnapshot = await FirebaseFirestore.instance
-            .collection('workouts')
-            .where('userId', isEqualTo: userId)
-            .get();
-        final runSnapshot = await FirebaseFirestore.instance
+      FirebaseFirestore.instance
+          .collection('workouts')
+          .where('userId', isEqualTo: userId)
+          .snapshots()
+          .listen((workoutSnapshot) {
+        FirebaseFirestore.instance
             .collection('runs')
             .where('userId', isEqualTo: userId)
-            .get();
-
-        setState(() {
-          totalWorkouts = workoutSnapshot.docs.length;
-          totalRuns = runSnapshot.docs.length;
+            .snapshots()
+            .listen((runSnapshot) {
+          setState(() {
+            totalWorkouts = workoutSnapshot.docs.length;
+            totalRuns = runSnapshot.docs.length;
+          });
         });
-      } catch (e) {
-        print("Error fetching dashboard stats: $e");
-      }
+      });
     }
   }
 
-  Future<void> _fetchActivityCounts() async {
+  void _listenToActivityCounts() {
     final userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId != null) {
-      try {
-        final counts = <DateTime, int>{};
+      final counts = <DateTime, int>{};
 
-        final workoutSnapshot = await FirebaseFirestore.instance
-            .collection('workouts')
-            .where('userId', isEqualTo: userId)
-            .get();
-
-        for (var doc in workoutSnapshot.docs) {
+      FirebaseFirestore.instance
+          .collection('workouts')
+          .where('userId', isEqualTo: userId)
+          .snapshots()
+          .listen((workoutSnapshot) {
+        counts.clear();
+        workoutSnapshot.docs.forEach((doc) {
           final date = (doc['date'] as Timestamp).toDate();
           final key = DateTime(date.year, date.month, date.day);
           counts[key] = (counts[key] ?? 0) + 1;
-        }
+        });
 
-        final runSnapshot = await FirebaseFirestore.instance
+        FirebaseFirestore.instance
             .collection('runs')
             .where('userId', isEqualTo: userId)
-            .get();
+            .snapshots()
+            .listen((runSnapshot) {
+          runSnapshot.docs.forEach((doc) {
+            final date = (doc['date'] as Timestamp).toDate();
+            final key = DateTime(date.year, date.month, date.day);
+            counts[key] = (counts[key] ?? 0) + 1;
+          });
 
-        for (var doc in runSnapshot.docs) {
-          final date = (doc['date'] as Timestamp).toDate();
-          final key = DateTime(date.year, date.month, date.day);
-          counts[key] = (counts[key] ?? 0) + 1;
-        }
-
-        setState(() {
-          activityCounts = counts;
+          setState(() {
+            activityCounts = Map<DateTime, int>.from(counts);
+          });
         });
-      } catch (e) {
-        print("Error fetching activity counts: $e");
-      }
+      });
     }
   }
 
@@ -132,7 +130,7 @@ class _HomePageState extends State<HomePage> {
     await FirebaseAuth.instance.signOut();
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => const LoginScreen()), 
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
     );
   }
 
@@ -145,7 +143,7 @@ class _HomePageState extends State<HomePage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
-            onPressed: _logout, 
+            onPressed: _logout,
             tooltip: 'Logout',
           ),
         ],
@@ -163,7 +161,6 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             const SizedBox(height: 20),
-
             Card(
               margin: const EdgeInsets.symmetric(vertical: 10),
               child: Padding(
@@ -196,7 +193,6 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ),
-
             const SizedBox(height: 20),
             Text(
               "Your Activity",
@@ -218,7 +214,6 @@ class _HomePageState extends State<HomePage> {
                 10: Colors.deepPurple,
               },
             ),
-
             const SizedBox(height: 20),
             Card(
               margin: const EdgeInsets.symmetric(vertical: 10),
@@ -231,7 +226,6 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ),
-
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
